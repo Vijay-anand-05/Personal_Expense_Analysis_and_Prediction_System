@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Categories – Personal Expense Analysis and Prediction System</title>
+    <link rel="stylesheet" href="../vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- App Shell (Sidebar & Topbar) -->
+    <div id="appShell"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <div class="page-content">
+        <!-- Action Header -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+          <div id="categoriesSummary" class="text-muted-sw small">
+            Loading categories summary…
+          </div>
+          <div>
+            <button class="btn btn-primary btn-sm" id="openAddCategoryBtn">
+              <i data-lucide="plus" style="width: 15px; height: 15px;"></i> Add Category
+            </button>
+          </div>
+        </div>
+
+        <!-- Categories Grid -->
+        <div class="row g-3" id="categoriesGrid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Add/Edit Category Modal -->
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sw-modal">
+          <div class="modal-header sw-modal-head">
+            <h2 class="modal-title h5 mb-0" id="categoryModalTitle">Add Category</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="categoryForm">
+            <div class="modal-body sw-modal-body">
+              <div id="categoryFormAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+
+              <div class="mb-3">
+                <label for="formCategoryName" class="form-label">Category Name *</label>
+                <input type="text" class="form-control" id="formCategoryName" placeholder="e.g. Subscriptions" required maxlength="40" />
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-sm-6">
+                  <label for="formCategoryBudget" class="form-label">Monthly Budget (INR)</label>
+                  <input type="number" step="1" min="0" class="form-control" id="formCategoryBudget" placeholder="0" />
+                  <div class="small-label mt-1 text-muted-sw">Optional limit for alerts</div>
+                </div>
+                <div class="col-sm-6">
+                  <label for="formCategoryColor" class="form-label">Category Color</label>
+                  <input type="color" class="form-control form-control-color w-100" id="formCategoryColor" value="#173F35" title="Choose color" />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Category Icon</label>
+                <input type="hidden" id="formCategoryIcon" value="tag" />
+                <div class="icon-grid" id="iconPickerGrid">
+                  <!-- Dynamically rendered icon options -->
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer sw-modal-foot">
+              <button type="button" class="btn btn-outline-sw" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="saveCategoryBtn">Save Category</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Category Modal -->
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sw-modal">
+          <div class="modal-header sw-modal-head border-0 pb-0">
+            <h2 class="modal-title h6 text-danger mb-0">Delete Category</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body sw-modal-body py-3">
+            <div id="deleteCatAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+            <p class="small text-muted mb-3">
+              Are you sure you want to delete "<strong id="deleteCategoryName"></strong>"?
+            </p>
+
+            <div id="reassignSection" class="p-3 bg-light rounded-3 d-none">
+              <label for="reassignCategorySelect" class="form-label text-dark fw-semibold">Reassign Existing Expenses</label>
+              <p class="small-label text-muted-sw mb-2">
+                This category is currently in use. Select another category to move all existing expenses to before deleting:
+              </p>
+              <select class="form-select form-select-sm" id="reassignCategorySelect">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer sw-modal-foot border-0 pt-0">
+            <button type="button" class="btn btn-outline-sw btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteCategoryBtn">Delete Category</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Toast Notifications -->
+    <div id="toastStack" class="toast-stack"></div>
+
+    <!-- Vendor Scripts -->
+    <script src="../vendor/bootstrap.bundle.min.js"></script>
+    <script src="../vendor/lucide.js"></script>
+
+    <!-- Page Module -->
+    <script type="module">
+      import { initCategories } from '../js/pages/categories.js';
+      document.addEventListener('DOMContentLoaded', () => {
+        initCategories();
+      });
+    </script>
+  </body>
+</html>

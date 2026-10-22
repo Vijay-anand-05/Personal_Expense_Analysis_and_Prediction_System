@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics – Personal Expense Analysis and Prediction System</title>
+    <link rel="stylesheet" href="../vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- App Shell (Sidebar & Topbar) -->
+    <div id="appShell"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <div class="page-content">
+        <!-- Date Filter Toolbar -->
+        <div class="card-sw card-body-sw mb-4">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <!-- Preset Buttons -->
+            <div class="d-flex flex-wrap gap-1">
+              <button class="btn btn-outline-sw btn-sm preset-btn" data-preset="this_month">This Month</button>
+              <button class="btn btn-outline-sw btn-sm preset-btn" data-preset="last_month">Last Month</button>
+              <button class="btn btn-outline-sw btn-sm preset-btn" data-preset="last_90">Last 90 Days</button>
+              <button class="btn btn-outline-sw btn-sm preset-btn" data-preset="this_year">This Year</button>
+            </div>
+
+            <!-- Custom Date Range & Export -->
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <div class="d-flex align-items-center gap-1">
+                <input type="date" class="form-control form-control-sm" id="analyticsStartDate" style="max-width: 140px;" />
+                <span class="text-muted-sw small">to</span>
+                <input type="date" class="form-control form-control-sm" id="analyticsEndDate" style="max-width: 140px;" />
+              </div>
+              <button class="btn btn-outline-sw btn-sm" id="analyticsExportCsvBtn" title="Export filtered analytics to CSV">
+                <i data-lucide="download" style="width: 15px; height: 15px;"></i> Export CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Analytics Content -->
+        <div id="analyticsContent" class="fade-in">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Global Toast Notifications -->
+    <div id="toastStack" class="toast-stack"></div>
+
+    <!-- Vendor Scripts -->
+    <script src="../vendor/bootstrap.bundle.min.js"></script>
+    <script src="../vendor/chart.umd.js"></script>
+    <script src="../vendor/lucide.js"></script>
+
+    <!-- Page Module -->
+    <script type="module">
+      import { initAnalytics } from '../js/pages/analytics.js';
+      document.addEventListener('DOMContentLoaded', () => {
+        initAnalytics();
+      });
+    </script>
+  </body>
+</html>

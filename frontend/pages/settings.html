@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings – Personal Expense Analysis and Prediction System</title>
+    <link rel="stylesheet" href="../vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- App Shell (Sidebar & Topbar) -->
+    <div id="appShell"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <div class="page-content">
+        <div class="row g-4">
+          <!-- Preferences & Security (Column 1) -->
+          <div class="col-lg-6 d-flex flex-column gap-4">
+            <!-- Profile Preferences -->
+            <div class="card-sw">
+              <div class="card-head">
+                <div>
+                  <h2>Preferences</h2>
+                  <div class="small-label">Display name and table options</div>
+                </div>
+              </div>
+              <div class="card-body-sw">
+                <form id="profileForm">
+                  <div class="mb-3">
+                    <label for="settingsDisplayName" class="form-label">Display Name</label>
+                    <input type="text" class="form-control" id="settingsDisplayName" maxlength="40" required />
+                  </div>
+                  <div class="mb-3">
+                    <label for="settingsEmail" class="form-label">Account Email</label>
+                    <input type="email" class="form-control bg-light" id="settingsEmail" readonly disabled />
+                    <div class="small-label mt-1 text-muted-sw">Email cannot be modified</div>
+                  </div>
+                  <div class="mb-4">
+                    <label for="settingsPageSize" class="form-label">Default Table Rows (Expenses)</label>
+                    <select class="form-select" id="settingsPageSize">
+                      <option value="10">10 rows</option>
+                      <option value="20">20 rows</option>
+                      <option value="50">50 rows</option>
+                      <option value="100">100 rows</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm" id="saveProfileBtn">
+                    Save Preferences
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Security & Account -->
+            <div class="card-sw">
+              <div class="card-head">
+                <div>
+                  <h2>Security & Account</h2>
+                  <div class="small-label">Password and account session</div>
+                </div>
+              </div>
+              <div class="card-body-sw d-flex flex-column gap-3">
+                <!-- Change Password -->
+                <div class="p-3 bg-light rounded-3 border">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h3 class="h6 mb-1">Account Password</h3>
+                      <div class="small-label text-muted-sw">Change your login password</div>
+                    </div>
+                    <button class="btn btn-outline-sw btn-sm" id="openChangePasswordBtn">
+                      Change Password
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Export All Data -->
+                <div class="p-3 bg-light rounded-3 border">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h3 class="h6 mb-1">Export Data</h3>
+                      <div class="small-label text-muted-sw">Download all transactions as a CSV spreadsheet</div>
+                    </div>
+                    <button class="btn btn-outline-sw btn-sm" id="exportAllExpensesBtn">
+                      <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export CSV
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Logout -->
+                <div class="p-3 bg-light rounded-3 border">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h3 class="h6 mb-1 text-danger">Sign Out</h3>
+                      <div class="small-label text-muted-sw">Terminate active session on this device</div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" id="logoutSettingsBtn">
+                      Log Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table & Database Management (Column 2) -->
+          <div class="col-lg-6 d-flex flex-column gap-4">
+            <div class="card-sw h-100">
+              <div class="card-head">
+                <div>
+                  <h2>Table & Data Management</h2>
+                  <div class="small-label">Truncate tables and seed sample test data</div>
+                </div>
+              </div>
+              <div class="card-body-sw d-flex flex-column gap-3">
+                <!-- Seed Sample Demo Data -->
+                <div class="p-3 rounded-3 border" style="background: rgba(221, 243, 228, 0.25);">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h3 class="h6 mb-1 d-flex align-items-center gap-2">
+                        <i data-lucide="sparkles" class="text-success" style="width: 16px; height: 16px;"></i>
+                        Populate Sample Data
+                      </h3>
+                      <div class="small-label text-muted-sw">
+                        Generate realistic, deterministic expenses across categories (Food, Rent, Bills, Travel, etc.) to evaluate charts, breakdowns, and ML forecasts.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-2 align-items-center mt-1">
+                    <div class="col-sm-6">
+                      <label for="seedMonthsSelect" class="form-label mb-1">Time Range</label>
+                      <select class="form-select form-select-sm" id="seedMonthsSelect">
+                        <option value="1">Last 1 Month</option>
+                        <option value="3" selected>Last 3 Months (Recommended)</option>
+                        <option value="6">Last 6 Months</option>
+                        <option value="12">Last 12 Months</option>
+                      </select>
+                    </div>
+                    <div class="col-sm-6 d-flex align-items-center pt-sm-4">
+                      <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="seedClearFirstToggle" checked />
+                        <label class="form-check-label small" for="seedClearFirstToggle">Clear existing expenses first</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-3 text-end">
+                    <button class="btn btn-primary btn-sm" id="seedDemoDataBtn">
+                      <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Load Sample Data
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Truncate Expenses Table -->
+                <div class="p-3 rounded-3 border" style="background: rgba(250, 236, 235, 0.35);">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h3 class="h6 mb-1 text-danger d-flex align-items-center gap-2">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                        Truncate Expenses Table
+                      </h3>
+                      <div class="small-label text-muted-sw">
+                        Permanently delete all expenses from the database table, reset the primary key auto-increment ID counter to 0, and vacuum SQLite storage.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-2 align-items-center mt-1">
+                    <div class="col-sm-7">
+                      <label for="truncateScopeSelect" class="form-label mb-1">Truncate Target</label>
+                      <select class="form-select form-select-sm" id="truncateScopeSelect">
+                        <option value="user" selected>My Expenses Only (Active User)</option>
+                        <option value="all">Entire Expenses Table (All Records)</option>
+                      </select>
+                    </div>
+                    <div class="col-sm-5 text-end pt-sm-4">
+                      <button class="btn btn-outline-danger btn-sm" id="openTruncateModalBtn">
+                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Truncate Expenses
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reset All Tables -->
+                <div class="p-3 bg-light rounded-3 border">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h3 class="h6 mb-1 d-flex align-items-center gap-2 text-warning-emphasis">
+                        <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                        Reset All Tables
+                      </h3>
+                      <div class="small-label text-muted-sw">
+                        Clears all expense records and re-initializes all categories back to the 12 standard system defaults (Food & Dining, Housing, Utilities, etc.).
+                      </div>
+                    </div>
+                    <button class="btn btn-outline-warning btn-sm flex-shrink-0 ms-2" id="openResetTablesModalBtn">
+                      <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i> Reset Tables
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System & Database Health (Full Width) -->
+          <div class="col-12">
+            <div class="card-sw">
+              <div class="card-head d-flex justify-content-between align-items-center">
+                <div>
+                  <h2>Database & System Status</h2>
+                  <div class="small-label">Real-time status reported by /api/health</div>
+                </div>
+                <button class="btn btn-outline-sw btn-sm" id="refreshHealthBtn" title="Refresh database counts">
+                  <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i> Refresh Status
+                </button>
+              </div>
+              <div class="card-body-sw" id="systemHealthBox">
+                <div class="text-muted small">Querying system health…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sw-modal">
+          <div class="modal-header sw-modal-head">
+            <h2 class="modal-title h5 mb-0">Change Password</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="changePasswordForm">
+            <div class="modal-body sw-modal-body">
+              <div id="passwordModalAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+
+              <div class="mb-3">
+                <label for="currentPassword" class="form-label">Current Password *</label>
+                <input type="password" class="form-control" id="currentPassword" required autocomplete="current-password" />
+              </div>
+
+              <div class="mb-3">
+                <label for="newPassword" class="form-label">New Password *</label>
+                <input type="password" class="form-control" id="newPassword" placeholder="Min 8 chars, 1 uppercase & 1 number" required autocomplete="new-password" />
+              </div>
+
+              <div class="mb-3">
+                <label for="confirmNewPassword" class="form-label">Confirm New Password *</label>
+                <input type="password" class="form-control" id="confirmNewPassword" placeholder="Repeat new password" required autocomplete="new-password" />
+              </div>
+            </div>
+            <div class="modal-footer sw-modal-foot">
+              <button type="button" class="btn btn-outline-sw" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="savePasswordBtn">Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Truncate Expenses Modal -->
+    <div class="modal fade" id="truncateExpensesModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sw-modal">
+          <div class="modal-header sw-modal-head bg-danger-subtle">
+            <h2 class="modal-title h5 mb-0 text-danger d-flex align-items-center gap-2">
+              <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
+              Confirm Truncate Expenses
+            </h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body sw-modal-body">
+            <p class="mb-3">
+              Are you sure you want to truncate the expenses table?
+            </p>
+            <div class="alert alert-danger py-2 px-3 small mb-3">
+              <strong>Warning:</strong> This action cannot be undone. All expense records for <strong id="truncateModalScopeLabel">the active user</strong> will be permanently deleted and the table's autoincrement ID sequence will be reset.
+            </div>
+            <p class="text-muted-sw small mb-0">
+              Categories and user account settings will remain intact.
+            </p>
+          </div>
+          <div class="modal-footer sw-modal-foot">
+            <button type="button" class="btn btn-outline-sw" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmTruncateBtn">
+              <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Truncate Expenses
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Reset All Tables Modal -->
+    <div class="modal fade" id="resetTablesModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sw-modal">
+          <div class="modal-header sw-modal-head bg-warning-subtle">
+            <h2 class="modal-title h5 mb-0 text-warning-emphasis d-flex align-items-center gap-2">
+              <i data-lucide="alert-circle" style="width: 20px; height: 20px;"></i>
+              Confirm Reset All Tables
+            </h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body sw-modal-body">
+            <p class="mb-3">
+              This will completely wipe all expenses and re-initialize your category table back to the 12 standard defaults.
+            </p>
+            <div class="alert alert-warning py-2 px-3 small mb-0">
+              Any custom categories you created will be replaced with standard default categories.
+            </div>
+          </div>
+          <div class="modal-footer sw-modal-foot">
+            <button type="button" class="btn btn-outline-sw" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmResetTablesBtn">
+              <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i> Reset All Tables
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Toast Notifications -->
+    <div id="toastStack" class="toast-stack"></div>
+
+    <!-- Vendor Scripts -->
+    <script src="../vendor/bootstrap.bundle.min.js"></script>
+    <script src="../vendor/lucide.js"></script>
+
+    <!-- Page Module -->
+    <script type="module">
+      import { initSettings } from '../js/pages/settings.js';
+      document.addEventListener('DOMContentLoaded', () => {
+        initSettings();
+      });
+    </script>
+  </body>
+</html>

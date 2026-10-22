@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Personal Expense Analysis and Prediction System - Local-first personal finance management" />
+    <title>Dashboard – Personal Expense Analysis and Prediction System</title>
+    <link rel="stylesheet" href="vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- App Shell (Sidebar & Topbar) -->
+    <div id="appShell"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <div class="page-content">
+        <div id="dashboardContent" class="fade-in">
+          <!-- Loading placeholder -->
+          <div class="text-center py-5 text-muted">
+            <div class="spinner-border text-success" role="status">
+              <span class="visually-hidden">Loading dashboard…</span>
+            </div>
+            <div class="mt-2 small">Loading your financial dashboard…</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Global Toast Notifications -->
+    <div id="toastStack" class="toast-stack"></div>
+
+    <!-- Vendor Scripts -->
+    <script src="vendor/bootstrap.bundle.min.js"></script>
+    <script src="vendor/chart.umd.js"></script>
+    <script src="vendor/lucide.js"></script>
+
+    <!-- Page Initialization Module -->
+    <script type="module">
+      import { initDashboard } from './js/pages/dashboard.js';
+      document.addEventListener('DOMContentLoaded', () => {
+        initDashboard();
+      });
+    </script>
+  </body>
+</html>

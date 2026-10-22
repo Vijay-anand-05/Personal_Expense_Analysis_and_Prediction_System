@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account – Personal Expense Analysis and Prediction System</title>
+    <link rel="stylesheet" href="vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="auth-page">
+      <div class="auth-card fade-in">
+        <div class="auth-logo">
+          <span class="brand-mark" style="width: 36px; height: 36px;">
+            <svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="1.5" y="9" width="3.2" height="5.5" rx="1" fill="#DDF3E4" />
+              <rect x="6.4" y="5.5" width="3.2" height="9" rx="1" fill="#DDF3E4" />
+              <rect x="11.3" y="1.5" width="3.2" height="13" rx="1" fill="#F4A261" />
+            </svg>
+          </span>
+          <div style="line-height: 1.15;">
+            <div style="font-size: 1.05rem; font-weight: 700; color: var(--sw-text);">Personal Expense</div>
+            <div style="font-size: 0.72rem; font-weight: 600; color: var(--sw-mint-strong); letter-spacing: 0.02em;">Analysis & Prediction System</div>
+          </div>
+        </div>
+
+        <div class="text-center mb-4">
+          <h2 class="h5 mb-1">Create an account</h2>
+          <p class="text-muted small mb-0">Start managing your personal finances with statistical forecasts</p>
+        </div>
+
+        <div id="alertBox" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+
+        <form id="signupForm" novalidate>
+          <div class="mb-3">
+            <label for="name" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="John Doe" required autocomplete="name" maxlength="60" />
+            <div class="invalid-feedback d-none" id="nameError">Full name is required.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required autocomplete="email" />
+            <div class="invalid-feedback d-none" id="emailError">Please enter a valid email address.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="password" name="password" placeholder="Min. 8 characters with uppercase and number" required autocomplete="new-password" />
+              <button class="btn btn-outline-secondary input-group-text password-toggle" type="button" id="togglePassword" aria-label="Show password">
+                <i data-lucide="eye" id="eyeIcon" style="width: 16px; height: 16px;"></i>
+              </button>
+            </div>
+            <div class="password-strength-meter">
+              <div id="strengthBar"></div>
+            </div>
+            <div class="small-label mt-1 text-muted-sw" id="strengthText">Min. 8 characters (including 1 uppercase & 1 number)</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Repeat your password" required autocomplete="new-password" />
+            <div class="invalid-feedback d-none" id="confirmPasswordError">Passwords do not match.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 mb-3" id="submitBtn">
+            <span id="btnText">Create Account</span>
+            <span id="btnSpinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <div class="text-center small mb-3">
+          Already have an account? <a href="login.html" class="fw-semibold">Log in</a>
+        </div>
+
+        <div class="notice-box info mt-3">
+          <i data-lucide="lock" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
+          <div>
+            <strong>100% Isolated:</strong> When you register, your personal database workspace and 12 default spending categories are automatically created.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="vendor/bootstrap.bundle.min.js"></script>
+    <script src="vendor/lucide.js"></script>
+    <script type="module">
+      import { api } from './js/api.js';
+      import { redirectIfAuth } from './js/auth.js';
+
+      if (window.lucide) window.lucide.createIcons();
+
+      // If already logged in, redirect
+      redirectIfAuth();
+
+      // Toggle password visibility
+      const toggleBtn = document.getElementById('togglePassword');
+      const passwordInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eyeIcon');
+      toggleBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        eyeIcon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+        if (window.lucide) window.lucide.createIcons();
+      });
+
+      // Password strength meter
+      const strengthBar = document.getElementById('strengthBar');
+      const strengthText = document.getElementById('strengthText');
+      passwordInput.addEventListener('input', () => {
+        const val = passwordInput.value;
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (/[A-Z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        if (val.length === 0) {
+          strengthBar.style.width = '0%';
+          strengthText.textContent = 'Min. 8 characters (including 1 uppercase & 1 number)';
+          strengthText.style.color = 'var(--sw-muted)';
+        } else if (score < 2) {
+          strengthBar.style.width = '25%';
+          strengthBar.style.backgroundColor = 'var(--sw-danger)';
+          strengthText.textContent = 'Weak password';
+          strengthText.style.color = 'var(--sw-danger)';
+        } else if (score === 2) {
+          strengthBar.style.width = '50%';
+          strengthBar.style.backgroundColor = 'var(--sw-accent)';
+          strengthText.textContent = 'Moderate password (add numbers or symbols)';
+          strengthText.style.color = 'var(--sw-accent-ink)';
+        } else if (score === 3) {
+          strengthBar.style.width = '75%';
+          strengthBar.style.backgroundColor = 'var(--sw-mint-strong)';
+          strengthText.textContent = 'Good password';
+          strengthText.style.color = 'var(--sw-mint-strong)';
+        } else {
+          strengthBar.style.width = '100%';
+          strengthBar.style.backgroundColor = 'var(--sw-mint-strong)';
+          strengthText.textContent = 'Strong password';
+          strengthText.style.color = 'var(--sw-mint-strong)';
+        }
+      });
+
+      // Form submission
+      const form = document.getElementById('signupForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const alertBox = document.getElementById('alertBox');
+      const confirmInput = document.getElementById('confirmPassword');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertBox.classList.add('d-none');
+
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmInput.value;
+
+        if (!name || !email || !password || !confirmPassword) {
+          alertBox.textContent = 'Please fill in all required fields.';
+          alertBox.classList.remove('d-none');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          alertBox.textContent = 'Passwords do not match.';
+          alertBox.classList.remove('d-none');
+          return;
+        }
+
+        if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+          alertBox.textContent = 'Password must be at least 8 characters long and contain at least one uppercase letter and one number.';
+          alertBox.classList.remove('d-none');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        btnText.textContent = 'Creating account…';
+        btnSpinner.classList.remove('d-none');
+
+        try {
+          const res = await api.auth.register({ name, email, password, confirmPassword });
+          if (res.success) {
+            window.location.href = 'index.html';
+          }
+        } catch (err) {
+          alertBox.textContent = err.message || 'Registration failed. Please try again.';
+          alertBox.classList.remove('d-none');
+        } finally {
+          submitBtn.disabled = false;
+          btnText.textContent = 'Create Account';
+          btnSpinner.classList.add('d-none');
+        }
+      });
+    </script>
+  </body>
+</html>
