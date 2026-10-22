@@ -61,7 +61,10 @@ async function request(endpoint, options = {}) {
   if (!res.ok) {
     // Session expiration interception (skip if already on auth pages)
     if (res.status === 401 && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('signup.html')) {
-      window.location.href = '/login.html?expired=1';
+      window.location.href = new URL(
+  'login.html?expired=1',
+  window.location.href
+).href;
     }
     const message = data.message || `Request failed (${res.status})`;
     const error = new Error(message);
