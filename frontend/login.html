@@ -137,8 +137,16 @@
         try {
           const res = await api.auth.login({ email, password, rememberMe });
           if (res.success) {
-            const returnUrl = params.get('returnUrl') || 'index.html';
-            window.location.href = returnUrl;
+            const returnUrl = params.get('returnUrl');
+            const safeReturnUrl =
+              returnUrl &&
+              !returnUrl.startsWith('/') &&
+              !returnUrl.includes('://') &&
+              !returnUrl.startsWith('//')
+                ? returnUrl
+                : 'index.html';
+
+            window.location.href = new URL(safeReturnUrl, window.location.href).href;
           }
         } catch (err) {
           alertBox.textContent = err.message || 'Login failed. Please check your credentials.';
