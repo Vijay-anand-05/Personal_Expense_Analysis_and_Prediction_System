@@ -3,7 +3,7 @@
  * Uses native Fetch API with credentials: 'include' for server-side cookie sessions.
  */
 
-export const API_BASE = '/api';
+const url = new URL(API_BASE + endpoint, window.location.origin);
 
 function cleanParams(params = {}) {
   const out = {};
