@@ -1,6 +1,8 @@
 /**
- * Authentication management and page route protection for frontend
+ * Authentication management and page route protection for browser application.
+ * Fully compatible with GitHub Pages subpaths and relative routing.
  */
+
 import { api } from './api.js';
 
 let currentUser = null;
@@ -24,8 +26,13 @@ export async function checkAuth() {
 export async function requireAuth() {
   const auth = await checkAuth();
   if (!auth) {
-    const currentPath = window.location.pathname + window.location.search;
-    window.location.href = `/login.html?returnUrl=${encodeURIComponent(currentPath)}`;
+    const isPagesDir = window.location.pathname.includes('/pages/');
+    const prefix = isPagesDir ? '../' : '';
+    const currentFilename = window.location.pathname.split('/').pop() || 'index.html';
+    const currentQuery = window.location.search || '';
+    const returnTarget = (isPagesDir ? 'pages/' : '') + currentFilename + currentQuery;
+
+    window.location.href = `${prefix}login.html?returnUrl=${encodeURIComponent(returnTarget)}`;
     return null;
   }
   return auth;
@@ -34,9 +41,20 @@ export async function requireAuth() {
 export async function redirectIfAuth() {
   const auth = await checkAuth();
   if (auth) {
+    const isPagesDir = window.location.pathname.includes('/pages/');
+    const defaultUrl = isPagesDir ? '../index.html' : 'index.html';
     const params = new URLSearchParams(window.location.search);
-    const returnUrl = params.get('returnUrl') || '/index.html';
-    window.location.href = returnUrl;
+    const returnUrl = params.get('returnUrl');
+
+    const safeUrl =
+      returnUrl &&
+      !returnUrl.startsWith('/') &&
+      !returnUrl.includes('://') &&
+      !returnUrl.startsWith('//')
+        ? (isPagesDir && !returnUrl.startsWith('../') ? `../${returnUrl}` : returnUrl)
+        : defaultUrl;
+
+    window.location.href = safeUrl;
     return true;
   }
   return false;
@@ -46,11 +64,12 @@ export async function logout() {
   try {
     await api.auth.logout();
   } catch (err) {
-    // Proceed to redirect anyway
+    // Ignore error and clear local session state
   }
   currentUser = null;
   currentSettings = null;
-  window.location.href = '/login.html';
+  const isPagesDir = window.location.pathname.includes('/pages/');
+  window.location.href = isPagesDir ? '../login.html' : 'login.html';
 }
 
 export function getCurrentUser() {

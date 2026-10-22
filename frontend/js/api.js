@@ -1,268 +1,253 @@
-
 /**
- * Centralized API client for Personal Expense Analysis and Prediction System.
- * Uses native Fetch API with credentials: 'include' for server-side cookie sessions.
- *
- * IMPORTANT:
- * API_BASE must point to your deployed backend for online authentication.
- * '/api' only works when the API is served from the same origin.
+ * Browser-side API Layer for Personal Expense Analysis and Prediction System.
+ * Replaces remote Express backend calls with direct IndexedDB service methods.
+ * Preserves the exact same function signatures and response payloads.
  */
 
-export const API_BASE = '/api';
+import { tx } from './storage/db.js';
+import { ensureDatabaseInitialized } from './storage/seed.js';
+import * as authService from './services/authService.js';
+import * as expenseService from './services/expenseService.js';
+import * as categoryService from './services/categoryService.js';
+import * as analyticsService from './services/analyticsService.js';
+import * as predictionService from './services/predictionService.js';
+import { currentMonth, monthRange, addMonths, round2, todayISO } from './services/dateUtils.js';
 
-function cleanParams(params = {}) {
-  const out = {};
+const appStartTime = Date.now();
 
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== '' && value !== null && value !== undefined) {
-      out[key] = value;
-    }
-  }
-
-  return out;
+// Helper to normalize month parameter whether passed as string or object
+function resolveMonth(param) {
+  if (!param) return currentMonth();
+  if (typeof param === 'string') return param;
+  if (typeof param === 'object') return param.month || currentMonth();
+  return currentMonth();
 }
 
-async function request(endpoint, options = {}) {
-  const url = new URL(
-    API_BASE + endpoint,
-    window.location.origin
-  );
-
-  if (options.params) {
-    const cleaned = cleanParams(options.params);
-
-    for (const [key, value] of Object.entries(cleaned)) {
-      url.searchParams.append(key, value);
-    }
-  }
-
-  const config = {
-    method: options.method || 'GET',
-    headers: {
-      Accept: 'application/json',
-      ...(options.headers || {}),
-    },
-    credentials: 'include',
+function resolveRange(params = {}) {
+  const m = monthRange(currentMonth());
+  return {
+    start: params.start_date || m.start,
+    end: params.end_date || m.end,
   };
-
-  if (
-    options.body &&
-    typeof options.body === 'object' &&
-    !(options.body instanceof FormData)
-  ) {
-    config.headers['Content-Type'] = 'application/json';
-    config.body = JSON.stringify(options.body);
-  } else if (options.body) {
-    config.body = options.body;
-  }
-
-  let response;
-
-  try {
-    response = await fetch(url.toString(), config);
-  } catch (error) {
-    throw new Error(
-      'Cannot reach the server. Check your internet connection and backend URL.'
-    );
-  }
-
-  // Handle CSV and other file downloads.
-  if (options.responseType === 'blob') {
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      throw new Error(
-        errorData.message ||
-        `Request failed (${response.status})`
-      );
-    }
-
-    return response.blob();
-  }
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    // Handle expired sessions without redirecting from auth pages.
-    const currentPath = window.location.pathname;
-    const isAuthPage =
-      currentPath.endsWith('/login.html') ||
-      currentPath.endsWith('/signup.html');
-
-    if (response.status === 401 && !isAuthPage) {
-      window.location.href = new URL(
-        'login.html?expired=1',
-        window.location.href
-      ).href;
-    }
-
-    const error = new Error(
-      data.message || `Request failed (${response.status})`
-    );
-
-    error.status = response.status;
-    error.errors = data.errors;
-
-    throw error;
-  }
-
-  return data;
 }
 
 export const api = {
-  // Authentication
+  // Authentication & Local Profile Management
   auth: {
-    register: (body) =>
-      request('/auth/register', {
-        method: 'POST',
-        body,
-      }),
-
-    login: (body) =>
-      request('/auth/login', {
-        method: 'POST',
-        body,
-      }),
-
-    logout: () =>
-      request('/auth/logout', {
-        method: 'POST',
-      }),
-
-    me: () =>
-      request('/auth/me'),
-
-    changePassword: (body) =>
-      request('/auth/change-password', {
-        method: 'POST',
-        body,
-      }),
-
-    updateProfile: (body) =>
-      request('/auth/profile', {
-        method: 'PUT',
-        body,
-      }),
-
-    seedDemo: (options = {}) =>
-      request('/auth/seed-demo', {
-        method: 'POST',
-        body: options,
-      }),
+    register: (body) => authService.register(body),
+    login: (body) => authService.login(body),
+    logout: () => authService.logout(),
+    me: () => authService.me(),
+    changePassword: (body) => authService.changePassword(body),
+    updateProfile: (body) => authService.updateProfile(body),
+    seedDemo: (options = {}) => authService.seedDemo(options),
   },
 
-  // Health check
-  health: () =>
-    request('/health'),
+  // Health and Storage Status
+  health: async () => {
+    await ensureDatabaseInitialized();
+    return tx(['expenses', 'categories', 'users'], 'readonly', async ([eStore, cStore, uStore]) => {
+      const expenses = (await eStore.getAll()).length;
+      const categories = (await cStore.getAll()).length;
+      const users = (await uStore.getAll()).length;
 
-  // Expenses
+      return {
+        success: true,
+        status: 'ok',
+        database: {
+          connected: true,
+          file: 'IndexedDB (Browser Local)',
+          expenses,
+          categories,
+          users,
+        },
+        uptime_seconds: Math.floor((Date.now() - appStartTime) / 1000),
+        environment: 'browser-static',
+      };
+    });
+  },
+
+  // Expense Management
   expenses: {
-    list: (params) =>
-      request('/expenses', { params }),
-
-    get: (id) =>
-      request(`/expenses/${id}`),
-
-    create: (body) =>
-      request('/expenses', {
-        method: 'POST',
-        body,
-      }),
-
-    update: (id, body) =>
-      request(`/expenses/${id}`, {
-        method: 'PUT',
-        body,
-      }),
-
-    delete: (id) =>
-      request(`/expenses/${id}`, {
-        method: 'DELETE',
-      }),
-
-    truncate: (scope = 'user') =>
-      request('/expenses/truncate', {
-        method: 'POST',
-        body: { scope },
-      }),
-
-    resetTables: (scope = 'user') =>
-      request('/expenses/reset-tables', {
-        method: 'POST',
-        body: { scope },
-      }),
-
-    exportCsv: (params) =>
-      request('/expenses/export', {
-        params,
-        responseType: 'blob',
-      }),
+    list: (params = {}) => expenseService.listExpenses(params),
+    get: (id) => expenseService.getExpense(id),
+    create: (body) => expenseService.createExpense(body),
+    update: (id, body) => expenseService.updateExpense(id, body),
+    delete: (id) => expenseService.deleteExpense(id),
+    truncate: (scope = 'user') => expenseService.truncateExpenses(scope),
+    resetTables: (scope = 'user') => expenseService.resetTables(scope),
+    exportCsv: (params = {}) => expenseService.exportExpensesCsv(params),
   },
 
-  // Categories
+  // Category Management
   categories: {
-    list: () =>
-      request('/categories'),
-
-    create: (body) =>
-      request('/categories', {
-        method: 'POST',
-        body,
-      }),
-
-    update: (id, body) =>
-      request(`/categories/${id}`, {
-        method: 'PUT',
-        body,
-      }),
-
-    delete: (id, reassignTo) =>
-      request(`/categories/${id}`, {
-        method: 'DELETE',
-        params: { reassign_to: reassignTo },
-      }),
+    list: () => categoryService.listCategories(),
+    create: (body) => categoryService.createCategory(body),
+    update: (id, body) => categoryService.updateCategory(id, body),
+    delete: (id, reassignTo) => categoryService.deleteCategory(id, reassignTo),
   },
 
-  // Analytics
+  // Visual Analytics Aggregations
   analytics: {
-    dashboard: (month) =>
-      request('/analytics/dashboard', {
-        params: { month },
-      }),
+    dashboard: async (param) => {
+      const user = await authService.requireActiveUser();
+      const month = resolveMonth(param);
+      const { start, end, days } = monthRange(month);
+      const elapsed = analyticsService.elapsedDays(month);
 
-    monthly: (params) =>
-      request('/analytics/monthly', { params }),
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
 
-    categories: (params) =>
-      request('/analytics/categories', { params }),
+      const thisMonth = analyticsService.monthTotalMem(expenses, month);
+      const lastMonth = analyticsService.monthTotalMem(expenses, addMonths(month, -1));
+      const budget = analyticsService.totalBudgetMem(categories);
+      const forecast = predictionService.monthEndMem(categories, expenses, month);
 
-    daily: (params) =>
-      request('/analytics/daily', { params }),
+      const daily = analyticsService
+        .dailyTotalsMem(expenses, start, end)
+        .slice(0, Math.max(elapsed, 0))
+        .map((d) => ({ ...d, day: Number(d.date.slice(8, 10)) }));
 
-    comparison: (month) =>
-      request('/analytics/comparison', {
-        params: { month },
-      }),
+      return {
+        success: true,
+        data: {
+          month,
+          today: todayISO(),
+          summary: {
+            this_month: thisMonth,
+            last_month: lastMonth,
+            change_pct: analyticsService.changePct(thisMonth, lastMonth),
+            budget,
+            budget_remaining: budget > 0 ? round2(budget - thisMonth) : null,
+            average_daily: elapsed > 0 ? round2(thisMonth / elapsed) : 0,
+            elapsed_days: elapsed,
+            days_in_month: days,
+            predicted_month_end: forecast.projected,
+            forecast_confidence: forecast.confidence.label,
+          },
+          monthly_trend: analyticsService.monthlyTotalsMem(expenses, addMonths(month, -5), month),
+          category_distribution: analyticsService
+            .categoryBreakdownMem(categories, expenses, start, end)
+            .filter((c) => c.total > 0),
+          daily,
+          comparison: analyticsService.comparisonMem(categories, expenses, month),
+          recent_expenses: analyticsService.recentExpensesMem(categories, expenses, 8),
+          insights: predictionService.insightsMem(categories, expenses, month),
+        },
+      };
+    },
+
+    monthly: async (params = {}) => {
+      const user = await authService.requireActiveUser();
+      const end = params.end_month || currentMonth();
+      const start = params.start_month || addMonths(end, -5);
+
+      const { expenses } = await analyticsService.getUserDataset(user.id);
+      const data = analyticsService.monthlyTotalsMem(expenses, start, end);
+      const total = round2(data.reduce((s, m) => s + m.total, 0));
+      const highest = data.reduce((best, m) => (m.total > (best?.total || 0) ? m : best), null);
+
+      return {
+        success: true,
+        data,
+        summary: {
+          total,
+          average: data.length ? round2(total / data.length) : 0,
+          highest_month: highest,
+        },
+      };
+    },
+
+    categories: async (params = {}) => {
+      const user = await authService.requireActiveUser();
+      const { start, end } = resolveRange(params);
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
+
+      const breakdown = analyticsService.categoryBreakdownMem(categories, expenses, start, end);
+      const total = round2(breakdown.reduce((s, c) => s + c.total, 0));
+
+      return {
+        success: true,
+        data: {
+          start,
+          end,
+          total,
+          categories: breakdown.filter((c) => c.total > 0),
+          top_five: breakdown.filter((c) => c.total > 0).slice(0, 5),
+          budget_vs_actual: analyticsService.budgetVsActualMem(categories, expenses, start, end),
+        },
+      };
+    },
+
+    daily: async (params = {}) => {
+      const user = await authService.requireActiveUser();
+      const { start, end } = resolveRange(params);
+      const { expenses } = await analyticsService.getUserDataset(user.id);
+      const summary = analyticsService.rangeSummaryMem(expenses, start, end);
+
+      return {
+        success: true,
+        data: {
+          ...summary,
+          weekly: analyticsService.weeklyTotals(summary.daily),
+        },
+      };
+    },
+
+    comparison: async (param) => {
+      const user = await authService.requireActiveUser();
+      const month = resolveMonth(param);
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
+
+      return {
+        success: true,
+        data: analyticsService.comparisonMem(categories, expenses, month),
+      };
+    },
   },
 
-  // Predictions
+  // Predictive Intelligence
   predictions: {
-    monthEnd: (month) =>
-      request('/predictions/month-end', {
-        params: { month },
-      }),
+    monthEnd: async (param) => {
+      const user = await authService.requireActiveUser();
+      const month = resolveMonth(param);
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
 
-    nextMonth: () =>
-      request('/predictions/next-month'),
+      return {
+        success: true,
+        data: predictionService.monthEndMem(categories, expenses, month),
+      };
+    },
 
-    categories: (month) =>
-      request('/predictions/categories', {
-        params: { month },
-      }),
+    nextMonth: async () => {
+      const user = await authService.requireActiveUser();
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
 
-    insights: (month) =>
-      request('/predictions/insights', {
-        params: { month },
-      }),
+      return {
+        success: true,
+        data: predictionService.nextMonthMem(categories, expenses),
+      };
+    },
+
+    categories: async (param) => {
+      const user = await authService.requireActiveUser();
+      const month = resolveMonth(param);
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
+
+      return {
+        success: true,
+        data: predictionService.categoryForecastMem(categories, expenses, month),
+      };
+    },
+
+    insights: async (param) => {
+      const user = await authService.requireActiveUser();
+      const month = resolveMonth(param);
+      const { categories, expenses } = await analyticsService.getUserDataset(user.id);
+
+      return {
+        success: true,
+        data: predictionService.insightsMem(categories, expenses, month),
+      };
+    },
   },
 };

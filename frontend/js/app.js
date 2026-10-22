@@ -19,7 +19,7 @@ export function renderShell(options = {}) {
     ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
     : 'U';
 
-  const isRoot = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
+  const isRoot = !window.location.pathname.includes('/pages/');
   const pathPrefix = isRoot ? '' : '../';
   const pagesPrefix = isRoot ? 'pages/' : '';
 
