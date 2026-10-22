@@ -62,6 +62,16 @@ export function openDatabase() {
   });
 }
 
+// Patch IDBRequest with standard Promise thenable interface for seamless async/await
+if (typeof IDBRequest !== 'undefined' && !IDBRequest.prototype.then) {
+  IDBRequest.prototype.then = function (onFulfilled, onRejected) {
+    return new Promise((resolve, reject) => {
+      this.onsuccess = () => resolve(this.result);
+      this.onerror = () => reject(this.error);
+    }).then(onFulfilled, onRejected);
+  };
+}
+
 /** Helper to run a transaction in a promise */
 export async function tx(storeNames, mode, callback) {
   const db = await openDatabase();
@@ -71,16 +81,31 @@ export async function tx(storeNames, mode, callback) {
     : transaction.objectStore(storeNames);
 
   return new Promise((resolve, reject) => {
-    let result;
-    transaction.oncomplete = () => resolve(result);
+    let callbackPromise;
+
     transaction.onerror = (e) => reject(transaction.error || e.target?.error);
     transaction.onabort = (e) => reject(new Error('Transaction aborted'));
 
     try {
-      result = callback(stores, transaction);
+      callbackPromise = Promise.resolve(callback(stores, transaction));
     } catch (err) {
-      reject(err);
+      return reject(err);
     }
+
+    callbackPromise
+      .then((val) => {
+        if (transaction.readyState === 'done') {
+          resolve(val);
+        } else {
+          transaction.oncomplete = () => resolve(val);
+        }
+      })
+      .catch((err) => {
+        try {
+          transaction.abort();
+        } catch (_) {}
+        reject(err);
+      });
   });
 }
 

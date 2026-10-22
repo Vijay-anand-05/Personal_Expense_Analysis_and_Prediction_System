@@ -145,6 +145,7 @@ export async function logout() {
 }
 
 export async function me() {
+  await ensureDatabaseInitialized();
   const session = await getActiveSession();
   if (!session || !session.userId) {
     const err = new Error('Not authenticated');
